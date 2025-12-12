@@ -5,7 +5,7 @@ chrome.downloads.onCreated.addListener(async (item) => {
         // Pause the download immediately - this is critical!
         // The pause happens asynchronously, but Chrome will pause it very quickly
         await chrome.downloads.pause(item.id);
-        console.log("✅ Download paused successfully:", item.id);
+        console.log(" Download paused successfully:", item.id);
 
         // Verify the download is actually paused
         const downloadItem = await chrome.downloads.search({ id: item.id });
@@ -29,7 +29,7 @@ chrome.downloads.onCreated.addListener(async (item) => {
             chrome.action.setBadgeBackgroundColor({ color: "#f44336" });
         }
     } catch (error) {
-        console.error("❌ Error pausing download:", error);
+        console.error(" Error pausing download:", error);
         // If we can't pause, cancel it to be safe
         try {
             await chrome.downloads.cancel(item.id);
