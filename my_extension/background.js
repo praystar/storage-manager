@@ -2,18 +2,9 @@ chrome.downloads.onCreated.addListener(async (item) => {
     console.log("Download started:", item);
 
     try {
-        // Pause the download immediately - this is critical!
-        // The pause happens asynchronously, but Chrome will pause it very quickly
+        // Pause the download immediately - simple approach like Flask version
         await chrome.downloads.pause(item.id);
-        console.log(" Download paused successfully:", item.id);
-
-        // Verify the download is actually paused
-        const downloadItem = await chrome.downloads.search({ id: item.id });
-        if (downloadItem.length > 0 && downloadItem[0].state === 'in_progress') {
-            // If still in progress, try pausing again (race condition protection)
-            console.log("Download still in progress, pausing again...");
-            await chrome.downloads.pause(item.id);
-        }
+        console.log("Download paused successfully:", item.id);
 
         // Save it for the popup to handle
         await chrome.storage.local.set({ pendingDownload: item });
@@ -29,13 +20,15 @@ chrome.downloads.onCreated.addListener(async (item) => {
             chrome.action.setBadgeBackgroundColor({ color: "#f44336" });
         }
     } catch (error) {
-        console.error(" Error pausing download:", error);
-        // If we can't pause, cancel it to be safe
-        try {
-            await chrome.downloads.cancel(item.id);
-            console.log("Download canceled due to pause failure");
-        } catch (cancelError) {
-            console.error("Error canceling download:", cancelError);
+        // Handle "must be in progress" error gracefully - this happens when download
+        // completes or is interrupted before we can pause it
+        const errorMsg = error.message || error.toString() || String(error);
+        if (errorMsg.includes('must be in progress') || errorMsg.includes('Download must be in progress')) {
+            console.log("Download not in progress (completed or interrupted), skipping");
+            return;
         }
+        
+        // For other errors, log but don't cancel
+        console.error("Error pausing download:", error);
     }
 });

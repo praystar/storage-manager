@@ -1,0 +1,4 @@
+.env
+venv
+native_host.sh
+com.storage_checker.json
