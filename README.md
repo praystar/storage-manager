@@ -403,9 +403,6 @@ Contributions are welcome! Please:
 - Unit tests
 - Documentation improvements
 
-## License
-
-[Add your license here - e.g., MIT, GPL, etc.]
 
 ## Acknowledgments
 
