@@ -2,6 +2,10 @@
 
 A Chrome/Edge browser extension for Linux users that automatically pauses downloads and checks available disk space before allowing them to proceed. This helps prevent running out of storage space during large downloads.
 
+## Discord Link for contributing and discussing about this project 
+https://discord.gg/AVQyybhQ
+join the channel - linux-storage-extension
+
 ## Features
 
 - 🛑 **Automatic Download Pausing**: Automatically pauses all downloads when they start
