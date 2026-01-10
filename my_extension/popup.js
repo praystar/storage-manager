@@ -1,3 +1,6 @@
+// Native Messaging version - uses native messaging instead of HTTP
+// This file replaces popup.js when using native messaging
+
 document.addEventListener("DOMContentLoaded", async () => {
     const { pendingDownload } = await chrome.storage.local.get("pendingDownload");
     
@@ -55,15 +58,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         const sizeBytes = inputValue * 1024 * 1024;
-        const checkUrl = `http://localhost:5000/check?size=${sizeBytes}&path=${encodeURIComponent(storedDownloadPath)}`;
 
         try {
-            const res = await fetch(checkUrl);
-            if (!res.ok) {
-                throw new Error(`Server error: ${res.status}`);
-            }
-            
-            const data = await res.json();
+            const data = await sendNativeMessage('check', {
+                size: sizeBytes,
+                path: storedDownloadPath
+            });
             
             if (!data.ok) {
                 showError(`Not enough space! ${data.error}`);
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         } catch (err) {
             console.error("Error checking space:", err);
-            showError("Failed to contact local server. Make sure the Flask app is running on port 5000.");
+            showError("Failed to contact native host. Make sure the native host is installed correctly.");
             try {
                 await chrome.downloads.cancel(pendingDownload.id);
             } catch (cancelErr) {
@@ -118,14 +118,7 @@ async function loadDiskInfo(path) {
     diskInfoDiv.innerHTML = '<div class="loading">Loading disk space...</div>';
 
     try {
-        const infoUrl = `http://localhost:5000/info?path=${encodeURIComponent(path)}`;
-        const res = await fetch(infoUrl);
-        
-        if (!res.ok) {
-            throw new Error(`Server error: ${res.status}`);
-        }
-
-        const data = await res.json();
+        const data = await sendNativeMessage('info', { path: path });
         
         if (!data.ok) {
             throw new Error(data.error || "Failed to get disk info");
@@ -167,10 +160,37 @@ async function loadDiskInfo(path) {
         diskInfoDiv.innerHTML = `
             <div class="loading" style="color: #e53e3e;">
                 ⚠️ Could not load disk space info.<br>
-                <small>Make sure Flask server is running</small>
+                <small>Make sure native host is installed</small>
             </div>
         `;
     }
+}
+
+function sendNativeMessage(command, params = {}) {
+    return new Promise((resolve, reject) => {
+        const message = {
+            command: command,
+            ...params
+        };
+
+        chrome.runtime.sendNativeMessage('com.storage_checker', message, (response) => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message || 'Native host connection failed'));
+                return;
+            }
+            
+            if (!response) {
+                reject(new Error('No response from native host'));
+                return;
+            }
+            
+            if (response.ok === false) {
+                reject(new Error(response.error || 'Unknown error'));
+            } else {
+                resolve(response);
+            }
+        });
+    });
 }
 
 function showError(message) {
@@ -181,3 +201,4 @@ function showError(message) {
         errorDiv.classList.remove("show");
     }, 5000);
 }
+

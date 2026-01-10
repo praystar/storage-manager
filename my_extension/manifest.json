@@ -5,10 +5,8 @@
   "description": "Checks available disk space before downloads.",
   "permissions": [
     "downloads",
-    "storage"
-  ],
-  "host_permissions": [
-    "http://localhost:5000/*"
+    "storage",
+    "nativeMessaging"
   ],
   "background": {
     "service_worker": "background.js"
@@ -28,3 +26,4 @@
     "128": "icon.png"
   }
 }
+

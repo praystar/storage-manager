@@ -1,0 +1,8 @@
+.env
+venv
+native_host.sh
+com.storage_checker.json
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

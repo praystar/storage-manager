@@ -23,9 +23,23 @@ The extension popup displays:
 The extension consists of two main components:
 
 1. **Browser Extension** (`my_extension/`): Chrome/Edge extension that intercepts downloads
-2. **Local Flask Server** (`local_app.py`): Python backend that checks disk space using `psutil`
+2. **Backend** (choose one):
+   - **Flask Server** (`local_app.py`): HTTP server that runs continuously
+   - **Native Messaging Host** (`native_host.py`): On-demand process (recommended)
 
-The extension communicates with the local server via HTTP to check disk space availability.
+### Communication Methods
+
+**Option 1: Flask Server (Original)**
+- Extension communicates via HTTP (`http://localhost:5000`)
+- Server runs continuously in background
+- Requires Flask dependency
+- See [README.md](./README.md) for setup
+
+**Option 2: Native Messaging (Recommended)**
+- Extension communicates via native messaging protocol
+- Host only runs when needed (on-demand)
+- More efficient, no background process
+- See [NATIVE_MESSAGING_SETUP.md](./NATIVE_MESSAGING_SETUP.md) for setup
 
 ## Installation
 
@@ -34,7 +48,6 @@ The extension communicates with the local server via HTTP to check disk space av
 - Linux operating system
 - Python 3.8+ with pip
 - Chrome or Edge browser
-- `psutil` Python library
 
 ### Step 1: Install Python Dependencies
 
@@ -59,30 +72,56 @@ pip install flask psutil
 
 5. The extension should now appear in your extensions list
 
-### Step 3: Start the Flask Server
+### Step 3: Choose Backend Method
 
-**Option A: Using the provided script**
-```bash
-./start_server.sh
-```
+#### Option A: Native Messaging (Recommended - More Efficient)
 
-**Option B: Manual start**
-```bash
-source venv/bin/activate
-python3 local_app.py
-```
+1. **Install the native messaging host:**
+   ```bash
+   ./install_native_host.sh <your-extension-id>
+   ```
+   Get your extension ID from `chrome://extensions/` (enable Developer mode)
+
+2. **Switch extension to native messaging:**
+   ```bash
+   cd my_extension
+   cp popup.js popup_flask.js  # Backup Flask version
+   cp ../popup_native.js popup.js  # Use native version
+   cp manifest.json manifest_flask.json  # Backup
+   cp manifest_native.json manifest.json  # Use native manifest
+   ```
+
+3. **Reload the extension** in Chrome
+
+**No server needed!** The native host runs on-demand.
+
+See [NATIVE_MESSAGING_SETUP.md](./NATIVE_MESSAGING_SETUP.md) for detailed instructions.
+
+#### Option B: Flask Server (Original Method)
+
+1. **Start the Flask server:**
+   ```bash
+   ./start_server.sh
+   ```
+   Or manually:
+   ```bash
+   source venv/bin/activate
+   python3 local_app.py
+   ```
+
+2. **Keep the terminal open** - the server must be running
 
 You should see:
 ```
-🚀 Starting local disk monitor on port 5000...
+Starting local disk monitor on port 5000...
  * Running on http://127.0.0.1:5000
 ```
 
-**Keep this terminal open** - the server must be running for the extension to work.
-
 ## Usage
 
-1. **Start the Flask server** (see Step 3 above)
+1. **Set up your chosen backend** (see Step 3 above)
+   - Native Messaging: Install native host (one-time setup)
+   - Flask Server: Start the server (must be running)
 
 2. **Download a file** from any website
 
@@ -104,7 +143,18 @@ You should see:
 
 ## Configuration
 
-### Flask Server Configuration
+### Configuration
+
+#### Native Messaging Host
+
+Edit `native_host.py` to customize:
+
+```python
+DEFAULT_MIN_SIZE = 1 * 1024**3          # 1 GB assumed if unknown
+RESERVED_SPACE = 5 * 1024**3            # Always keep 5 GB free
+```
+
+#### Flask Server
 
 Edit `local_app.py` to customize:
 
@@ -293,18 +343,18 @@ storage-manager/
 │   ├── popup.js           # Popup logic
 │   ├── style.css          # Popup styling
 │   └── icon.png           # Extension icon
-├── local_app.py           # Flask server
-├── start_server.sh        # Server startup script
-├── requirements.txt       # Python dependencies
+├── native_host.py           # native messaging 
+├── native_host.sh        # Set up native messaging
+├── 
 ├── README.md              # This file (main documentation)
-├── TESTING.md             # Testing guide
+├── 
 └── KNOWN_ISSUES.md        # Known issues and limitations
 ```
 
 ### API Endpoints
 
 #### `GET /info?path=<path>`
-Get current disk space information.
+Get current disk space information.=
 
 **Parameters:**
 - `path` (optional): Directory path to check (default: `/`)
@@ -361,11 +411,6 @@ Check if there's enough space for a download.
 - Verify extension has "downloads" permission
 - Check if background service worker is running
 
-### "Failed to contact local server" error
-- Ensure Flask server is running on port 5000
-- Check if port is in use: `lsof -i :5000`
-- Verify firewall isn't blocking localhost connections
-- Test API directly: `curl http://localhost:5000/info`
 
 ### Popup doesn't open automatically
 - Click the extension icon manually
@@ -377,11 +422,7 @@ Check if there's enough space for a download.
 - Check if path exists and is accessible
 - Ensure you have read permissions for the path
 
-### Server won't start
-- Check Python version: `python3 --version` (need 3.8+)
-- Verify dependencies: `pip list | grep -E "flask|psutil"`
-- Check if port 5000 is available
-- Review error messages in terminal
+
 
 ## Contributing
 
@@ -402,18 +443,3 @@ Contributions are welcome! Please:
 - Better error handling
 - Unit tests
 - Documentation improvements
-
-
-## Acknowledgments
-
-- Built with Flask and Chrome Extension APIs
-- Uses `psutil` for cross-platform disk space checking
-- Inspired by the need to prevent accidental disk space exhaustion
-
-## Support
-
-For issues, questions, or contributions, please open an issue on the GitHub repository.
-
----
-
-**Note**: This extension is designed specifically for Linux users. Windows and macOS support may be added in future versions.

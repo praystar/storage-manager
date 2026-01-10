@@ -1,4 +1,4 @@
-# Testing Guide for Disk Space Checker Extension
+# Testing Guide for Disk Space Checker Extension will be removed soon
 
 ## Step 1: Start the Flask Server
 
@@ -23,14 +23,14 @@ You should see:
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable "Developer mode" (toggle in top-right corner)
 3. Click "Load unpacked"
-4. Navigate to and select: `/home/prayash/Documents/storage-manager/my_extension`
+4. Navigate to and select: `/home/users/Documents/storage-manager/my_extension`
 5. The extension should appear in your extensions list
 
 ### For Edge:
 1. Open Edge and go to `edge://extensions/`
 2. Enable "Developer mode" (toggle in bottom-left)
 3. Click "Load unpacked"
-4. Navigate to and select: `/home/prayash/Documents/storage-manager/my_extension`
+4. Navigate to and select: `/home/users/Documents/storage-manager/my_extension`
 
 ## Step 3: Test the Extension
 
